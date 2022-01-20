@@ -19,23 +19,23 @@ As you can see, aside from the I2C bus, there is one additional interface availa
 
 Scanning reveals that there are 2 peripherals available on the I2C bus, 0x09, and 0x10. Sniffing on the bus reveals that pushing buttons on the device trigger broadcast commands to 0x00 (i.e. it will be received by all peripherals).
 
+Testing reveals that 0x09 is the MD board, 0x10 the main board. If you send commands to 0x00, both boards will process any commands that they can handle, but ignore commands intended for another board. For example, 0xB0 MD commands will only be processed by the MD board, 0x90 CD commands by the mainboard.
+
 ### Sending commands
 
 Initial testing reveals that the commands are essentially the same as what the M-Crew software sends to the official adaptor (without some packaging). Commands as previously documented by other reverse engineering projects for this adaptor (such as https://github.com/4gra/pclk-mn10/blob/master/commands.json) can easily be transmitted using I2C transactions.
 
-To send a command, initiate a transaction for address 0x00, and start with **0x20**, following with the bytes for the commands. **Update:** it seems that replacing 0x20 with another non-null byte still causes the deck to execute the command. Possibly this is just an identifier for the internal peripherals that initiated it? 
+To send a command, initiate a transaction for address 0x00, and start with **0x20**, following with the bytes for the commands. **Update:** it seems that replacing 0x20 with another non-null byte still causes the deck to execute the command. Possibly this is just an identifier for the internal peripherals that initiated it, as changing it doesn't seem to have any impact.
 
 E.g., in the case of the Arduino framework, to open the CD drive:
 
->  Wire.beginTransmission(0x0);
+>  Wire.beginTransmission(0x0); // or 0x10 to directly target the main board
 >  Wire.write("\x20\x90\x54\x00\x01");
 >  Wire.endTransmission();
 
 ### Reading data
 
-I2C logs reveal that responses seem the be broadcasted to 0x00 as well, but the byte streams are prepended with **0x12** instead of with **0x20** (as is with commands). Possibly this means that the byte is just used as identifier for the issuing peripherals. **More research is needed!**
-
-To receive updates / read data, most likely you need to join the bus as a slave and just listen for broadcasted data. 
+All responses are broadcasted to 0x00 as well. Most responses for the MD board are prefixed by 0x12, and 0x20 for the main board. To receive updates / read data, you need to join the bus as a slave and listen for broadcast data (in the case of AVR board this means setting the lower bit of TWAR).
 
 ## Resources
 
