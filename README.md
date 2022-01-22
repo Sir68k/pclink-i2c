@@ -21,17 +21,24 @@ Scanning reveals that there are 2 peripherals available on the I2C bus, 0x09, an
 
 Testing reveals that 0x09 is the MD board, 0x10 the main board. If you send commands to 0x00, both boards will process any commands that they can handle, but ignore commands intended for another board. For example, 0xB0 MD commands will only be processed by the MD board, 0x90 CD commands by the mainboard.
 
+| Peripheral | I2C addr | response/command prefix |
+| -----------|----------|-------------------------|
+| Main board | 0x10     | 0x20 (== 0x10 << 1)     |
+| MD board   | 0x09     | 0x12 (== 0x09 << 1)     |
+
 ### Sending commands
 
 Initial testing reveals that the commands are essentially the same as what the M-Crew software sends to the official adaptor (without some packaging). Commands as previously documented by other reverse engineering projects for this adaptor (such as https://github.com/4gra/pclk-mn10/blob/master/commands.json) can easily be transmitted using I2C transactions.
 
-To send a command, initiate a transaction for address 0x00, and start with **0x20**, following with the bytes for the commands. **Update:** it seems that replacing 0x20 with another non-null byte still causes the deck to execute the command. Possibly this is just an identifier for the internal peripherals that initiated it, as changing it doesn't seem to have any impact.
+To send a command, initiate a transaction for address 0x00, prefixed with any number (generally your slave address << 1), following with the bytes for the commands.
 
 E.g., in the case of the Arduino framework, to open the CD drive:
 
->  Wire.beginTransmission(0x0); // or 0x10 to directly target the main board
->  Wire.write("\x20\x90\x54\x00\x01");
->  Wire.endTransmission();
+```
+Wire.beginTransmission(0x0); // or 0x10 to directly target the main board
+Wire.write("\x20\x90\x54\x00\x01"); // 0x20 is the slave address from the main board, this value seems to be ignored, so you can put anything else
+Wire.endTransmission();
+```
 
 ### Reading data
 
