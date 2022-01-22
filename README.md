@@ -36,7 +36,7 @@ E.g., in the case of the Arduino framework, to open the CD drive:
 
 ```
 Wire.beginTransmission(0x0); // or 0x10 to directly target the main board
-Wire.write("\x20\x90\x54\x00\x01"); // 0x20 is the slave address from the main board, this value seems to be ignored, so you can put anything else
+Wire.write("\x20\x90\x54\x00\x01"); // 0x20 is what is used by the main board, but this value seems to be ignored, so you can put anything else
 Wire.endTransmission();
 ```
 
